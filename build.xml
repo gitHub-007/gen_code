@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+ <project default="compile" basedir=".">
+	<!--<property environment="env" />-->
+	<property name="env.JAVA_HOME" value="D:/Tools/java/jdk1.8.0_172"/>
+	<!-- 路径信息 -->
+	<property name="lib" value="WebContent/WEB-INF/lib"/>
+	<property name="classes.dir" value="WebContent/WEB-INF/classes"/>
+	<property name="tomcat.home" value="D:/Tools/apache-tomcat-9.0.8-1"></property>
+	<property name="log.file" value="ant_log_file.log"></property>
+	<path id="weblib">    
+		<fileset dir="${lib}">  
+			<include name="*.jar"/>  
+		</fileset>    
+	</path> 
+	<path id="tomcatlib">
+		<fileset dir="${tomcat.home}/lib">
+			<include name="*.jar"/>  
+		</fileset> 
+	</path>
+
+	<target name="init">
+		<condition property="isWindows">
+			<os family="windows"/>
+		</condition>
+		<condition property="isLinux">
+			<os family="unix"/>
+		</condition>
+	</target>
+
+	<!-- 删除classes文件夹 -->  
+	<target name="del" description="del_target" >
+		<delete dir="${classes.dir}"></delete>  
+		<echo>删除calsses文件夹</echo>  
+	</target>  
+
+	<!-- 移动配置文件 -->  
+	<target name="moveProperties" depends="del" description="">
+		<!-- 将配置文件移动到war包目录下 -->  
+		<copy todir="${classes.dir}">  
+			<fileset dir="src" id="propertyFiles">
+				<include name="*.xml"/>  
+				<include name="*.properties"/>  
+				<include name="**/*.jpg"/>  
+				<include name="**/*.ftl"/>  
+				<include name="**/*.cer"/>  
+				<exclude name="**/*.java"/>  
+			</fileset>  
+		</copy> 
+		<!-- 将pojo中的hibernate配置文件移动到war包对应目录下  
+        <copy todir="${lib}">  
+            <fileset dir="${tomcat.home}/lib" id="pojofile">  
+                <include name="servlet-api.jar"/>
+                <include name="jsp-api.jar"/>
+            </fileset>  
+        </copy>  
+    	-->
+	</target>  
+
+	<!-- 编译src文件夹下的java文件到classes文件夹下 jre里面不包括javac,所以一定要使用jdk/bin目录下面的javac-->
+	<target name="compile" depends="moveProperties" description="">
+		<echo>编译src文件夹下的java文件到classes文件夹下</echo>  
+		<mkdir dir="${classes.dir}"/>  
+		<javac executable="${env.JAVA_HOME}/bin/javac" source="1.8" target="1.8" srcdir="src" destdir="${classes.dir}"
+			   fork="yes" debug="true" encoding="UTF-8"
+			   includeantruntime="on"  debuglevel="lines,vars,source" >
+			<compilerarg line="-XDignore.symbol.file"/>
+			<classpath refid="weblib"></classpath>  
+			<classpath refid="tomcatlib"></classpath>  
+			<patternset id="ingorefile">
+				<include name="**/*.java"/>
+				<exclude name="*.xml"/>
+				<exclude name="*.properties"/>
+				<exclude name="**/*.jpg"/>
+				<exclude name="**/*.cer"/>
+				<exclude name="**/*.ftl"/>
+			</patternset>
+		</javac>  		
+	</target>  
+
+	<!-- 打war包 
+    <target name="war" depends="compile" description="">  
+        <war destfile="${build}/war/${projectName}.war" webxml="WebContent/WEB-INF/web.xml">  
+            <lib dir="${lib}"/>  
+            <classes dir="${build}/classes"/>  
+            <fileset dir="WebContent"/>
+        </war>  
+        <echo>打war包</echo>  
+    </target>  
+    -->  
+
+	<!--********************** 启停tomcat的两种方法  ***********************************-->
+	<!-- 在命令行界面显示tomcat控制台 -->
+	<target name="stop_tomcat">
+		<echo>停止tomcat</echo>
+		<exec executable="cmd" dir="${tomcat.home}/bin" failonerror="false"
+					output="${log.file}" append="true" >  
+			<env key="CATALINA_HOME" path="${tomcat.home}"/>
+			<arg value="/c shutdown.bat" />   
+		</exec>
+	</target>
+
+	<target name="start_tomcat">
+		<echo>启动tomcat</echo>
+		<exec executable="cmd" dir="${tomcat.home}/bin"  failonerror="false"
+					output="${log.file}" append="true" > 
+			<env key="CATALINA_HOME" path="${tomcat.home}"/>
+			<arg value="/c startup.bat" />   
+		</exec>
+	</target> 
+
+</project>  
